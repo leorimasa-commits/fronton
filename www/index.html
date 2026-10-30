@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f5a3c">
+<style>html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Paredón: Tenis en Frontón</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: una pared de frontón pintada; la línea de red (91 cm) cruza la cabecera y marca el progreso. Vista móvil de una columna. */
+:root{
+  --wall:#e9ede6; --surface:#f7f8f4; --ink:#17231b; --muted:#56655a;
+  --court:#1f5a3c; --chalk:#ffffff; --ball:#d6e33b; --line:#c9d1c6;
+  --done:#2f7d52; --wallpaint:#1c5a42; --floorpaint:#4a6a96;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --wall:#101a14; --surface:#16231b; --ink:#e7eee8; --muted:#9aab9f;
+  --court:#2d7a52; --chalk:#e7eee8; --ball:#d6e33b; --line:#2a3a30; --done:#5dbb85; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --wall:#101a14; --surface:#16231b; --ink:#e7eee8; --muted:#9aab9f;
+  --court:#2d7a52; --chalk:#e7eee8; --ball:#d6e33b; --line:#2a3a30; --done:#5dbb85; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--wall);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+header.band{background:var(--court);color:#fff;position:relative;overflow:hidden}
+header.band .wrap{padding-block:22px 30px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(44px,12vw,72px);line-height:.9;margin:6px 0 10px;letter-spacing:.01em;text-transform:uppercase}
+h1 .dot{display:inline-block;width:.42em;height:.42em;border-radius:50%;background:var(--ball);vertical-align:.12em;margin-left:.08em}
+.sub{margin:0;max-width:44ch;opacity:.92}
+.netline{position:absolute;left:0;right:0;bottom:0;height:6px;background:rgba(255,255,255,.25)}
+.netline i{display:block;height:100%;background:#fff;width:0;transition:width .5s}
+.netlabel{font-family:var(--f-mono);font-size:11px;margin-top:14px;opacity:.85}
+nav.tabs{display:flex;gap:4px;margin:18px 0 8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
+nav.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:700 15px var(--f-body);padding:10px 6px;border-radius:7px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--court);color:#fff}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--ball);outline-offset:2px}
+h2{font-family:var(--f-display);font-weight:800;font-size:30px;text-transform:uppercase;margin:26px 0 4px;letter-spacing:.02em;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 14px}
+.level{margin-top:22px}
+.level-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.level-head .meta{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.sessions{display:grid;gap:8px;margin-top:10px}
+.sess{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--ink);font:inherit;cursor:pointer}
+.sess:hover{border-color:var(--court)}
+.sess .num{font-family:var(--f-display);font-weight:800;font-size:28px;width:38px;flex:none;color:var(--court)}
+.sess .body{flex:1;min-width:0}
+.sess .t{font-weight:700}
+.sess .d{color:var(--muted);font-size:14px}
+.chip{font-family:var(--f-mono);font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);flex:none}
+.chip.ok{background:var(--done);border-color:var(--done);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-family:var(--f-display);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+/* Sesión */
+.back{background:none;border:0;color:var(--court);font:700 15px var(--f-body);padding:8px 0;cursor:pointer;margin-top:12px}
+.steps-bar{display:flex;gap:4px;margin:10px 0 16px}
+.steps-bar i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.steps-bar i.on{background:var(--ball)}
+.steps-bar i.done{background:var(--court)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.phase{font-family:var(--f-mono);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--court);font-weight:500}
+.wallfig{margin:14px 0;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.wallfig svg{display:block;width:100%;height:auto}
+.target{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.target .chip{font-size:12px}
+ol.how{padding-left:22px;margin:10px 0}
+ol.how li{margin:4px 0}
+.cue{border-left:4px solid var(--ball);padding:6px 0 6px 12px;margin:12px 0;font-weight:700}
+.timer{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.clock{font-family:var(--f-mono);font-size:44px;font-variant-numeric:tabular-nums;min-width:4.5ch}
+.btn{border:0;border-radius:10px;padding:12px 18px;font:700 16px var(--f-body);cursor:pointer;background:var(--court);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ball{background:var(--ball);color:#17231b}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.counter{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.counter input{width:90px;font:500 20px var(--f-mono);padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--wall);color:var(--ink)}
+.counter label{font-size:14px;color:var(--muted)}
+.finish{text-align:center}
+.finish h2{margin-top:6px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 14px;margin-top:8px}
+details summary{cursor:pointer;font-weight:700;padding:12px 0}
+details p,details ul{margin:0 0 12px}
+.note{font-size:13px;color:var(--muted);margin-top:18px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 10px;font-size:12px;color:var(--muted);background:var(--surface)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--ball)}
+.legend i.vuelta{border-top:2px dashed var(--muted)}
+.legend i.mov{border-top:2px dotted var(--ball)}
+.hand{display:flex;align-items:center;gap:6px;margin:4px 0 12px;font-size:14px;color:var(--muted)}
+.hand button{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 14px var(--f-body);padding:7px 14px;border-radius:99px;cursor:pointer}
+.hand button[aria-pressed="true"]{background:var(--court);border-color:var(--court);color:#fff}
+.sess.media{text-decoration:none;align-items:flex-start}
+nav.tabs button{font-size:14px;padding:10px 4px}
+</style>
+
+
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">16 sesiones de 40 minutos · frontón de 12 m</div>
+    <h1>Paredón<span class="dot"></span></h1>
+    <p class="sub">Tenis en frontón paso a paso, armado sobre tu pared: la línea blanca como red, los tres círculos como blancos y las líneas del piso para ubicarte.</p>
+    <div class="netlabel" id="netlabel">Línea de red · 0 de 16 sesiones</div>
+  </div>
+  <div class="netline"><i id="netfill"></i></div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-prog" aria-selected="true">Programa</button>
+    <button role="tab" id="tab-base" aria-selected="false">Fundamentos</button>
+    <button role="tab" id="tab-media" aria-selected="false">Multimedia</button>
+  </nav>
+  <section id="view-prog"></section>
+  <section id="view-sess" hidden></section>
+  <section id="view-base" hidden></section>
+  <section id="view-media" hidden></section>
+</main>
+
+<script>
+// ---------- Tu frontón ----------
+// Pared plana verde: línea blanca (red) y tres círculos. Piso de 12 m con pasillo central,
+// "primera línea" cerca de la pared y "segunda línea" a mitad de cancha.
+// Regla: la pelota sale con el mismo ángulo con que pega (recto vuelve recto, diagonal sale en la diagonal opuesta).
+const SPOT = ["Sobre la segunda línea","2 a 3 m detrás de la segunda línea","En el fondo de la cancha","En el fondo de la cancha"];
+const BASE_M = [5.5, 8, 10.5, 10.5];
+
+// Textos escritos con marcadores de lado: {Do}/{Da} lado del drive, {Ro}/{Ra} lado del revés.
+const EX = {
+  movilidad:{phase:"Calentamiento",name:"Movilidad articular",
+    how:["Círculos de tobillos, rodillas y cadera (10 por lado).","Rotaciones de tronco con la raqueta apoyada en los hombros.","Círculos de hombros y muñecas hacia adelante y atrás.","Trote suave de ida y vuelta por el pasillo central, de la pared al fondo."],
+    cue:"Entrá en calor antes de pegar fuerte: muñeca y hombro sufren primero."},
+  split:{phase:"Calentamiento",name:"Split-step y desplazamientos",
+    how:["Parate en el pasillo central, a la altura del día.","Hacé un saltito con ambos pies (split-step) cada 2 segundos.","Después del salto, desplazate lateral hasta quedar frente al círculo {Do} y volvé.","Repetí hacia el círculo {Ro}. Alterná durante el tiempo."],
+    cue:"Aterrizá en la punta de los pies, rodillas flexionadas."},
+  sombra:{phase:"Calentamiento",name:"Swing en sombra",
+    how:["Sin pelota, encadená: drive, revés, volea de drive, volea de revés.","Hacé el ciclo lento 5 veces marcando preparación, impacto y terminación.","Después 5 ciclos a ritmo de juego, con split-step entre golpes."],
+    cue:"La terminación del drive pasa por arriba del hombro contrario."},
+  tres:{phase:"Combinado",name:"Recorrido de los tres círculos",
+    how:["Frente al círculo {Do}: 2 o 3 drives rectos al círculo {Do}.","Para pasar al medio, apuntá entre el círculo {Do} y el central: la pelota vuelve frente al central.","Frente al central: varios golpes rectos al central, alternando drive y revés. Cambiá de empuñadura en cada golpe.","Para pasar al otro lado, apuntá entre el central y el círculo {Ro}.","Frente al círculo {Ro}: varios reveses rectos. Después hacé el recorrido de vuelta."],
+    cue:"Para moverte un círculo, apuntá a mitad de camino entre donde estás y adonde querés ir."},
+  alterno:{phase:"Combinado",name:"Cruzados de drive y revés",
+    how:["Parate en la mitad {Da}, frente al círculo {Do}.","Pegá un drive al círculo central: la pelota sale en diagonal hacia la mitad {Ra}.","Cruzá el pasillo y pegá un revés al círculo central: vuelve en diagonal a la mitad {Da}.","Seguí así, siempre con un pique."],
+    cue:"Apuntando al centro, la pared te manda al otro lado: arrancá a moverte apenas pegás."},
+  dosydos:{phase:"Combinado",name:"Recto y cruzado",
+    how:["Desde la mitad {Da}, pegá un drive recto al círculo {Do}: vuelve derecho a vos.","El segundo drive mandalo al círculo central: sale hacia la mitad {Ra}.","Ahí, revés recto al círculo {Ro}, y el segundo revés al central para volver.","Ciclo: recto, cruzado, recto, cruzado."],
+    cue:"Recto para controlar, al centro para cambiar de lado."},
+  pv:{phase:"Combinado",name:"Fondo y volea",
+    how:["Desde el pasillo central, pegá 3 golpes rectos con pique al círculo central.","Al tercero, subí por el pasillo hasta entre la primera y la segunda línea.","Pegá 3 voleas rectas al círculo central.","Para alternar volea de drive y de revés, corré el cuerpo medio paso a un lado o al otro de la pelota."],
+    cue:"Cuando subís, frená con split-step antes de cada volea."},
+  escalera:{phase:"Combinado",name:"Escalera",
+    how:["Empezá en el fondo, en el pasillo central, con un golpe recto al círculo central.","Después de cada golpe, da un paso hacia la pared.","Alterná drive y revés acomodándote a un lado o al otro de la pelota, que vuelve derecha.","Al pasar la segunda línea seguís sin pique: 4 voleas. Retrocedé y volvé a subir."],
+    cue:"Cuanto más cerca de la pared, más corto el swing."},
+  ruleta:{phase:"Combinado",name:"Lo que venga",
+    how:["Peloteo libre desde tu posición del día.","Usá la regla de la pared: recto para quedarte, en diagonal para moverte.","No podés repetir el mismo golpe 3 veces seguidas: cambiá de círculo, de ritmo (alto o fuerte) o subí a volear.","Contá tu mejor serie."],
+    cue:"Decidí el golpe apenas la pelota sale de la pared.", counter:"Mejor serie sin error", rally:true},
+  lateral:{phase:"Combinado",name:"Cruzados en movimiento",
+    how:["Arrancá bien abierto, del lado {Do} de la cancha.","Drive al círculo central: la pelota cruza a la mitad {Ra}.","Corré lateral, revés al círculo central y volvé a la mitad {Da}.","Al cruzar, pisá siempre el pasillo central con un split-step."],
+    cue:"Pasos cortos al final para acomodarte a la pelota."},
+  blanco:{phase:"Precisión",name:"Tiro a los círculos",
+    how:["Frente al círculo {Do}: 3 drives rectos al {Do}.","El cuarto, al central, para cruzar a la mitad {Ra}.","Frente al círculo {Ro}: 3 reveses rectos al {Ro}, y el cuarto al central para volver.","Cada vuelta completa, subí por el pasillo y meté 2 voleas al central. Contá cuántas tocan un círculo sobre 20."],
+    cue:"Elegí el círculo antes de pegar, no durante.", counter:"Aciertos del último ciclo (de 20)"},
+  saquePrimer:{phase:"Combinado",name:"Saque y primer golpe",
+    how:["Sacá desde el fondo, parado en el pasillo central.","Apuntá al círculo central: tiene que pegar arriba de la línea blanca y vuelve derecho.","La devolución jugala con drive o revés, con un pique.","El tercer golpe es una volea: subí por el pasillo y cerrá el punto. Atajá y repetí."],
+    cue:"Saque, golpe, volea: el patrón clásico del saque y red.", counter:"Saques que tocaron el círculo central (último set de 10)"},
+  remate:{phase:"Combinado",name:"Globo y remate",
+    how:["Desde el pasillo central, pegá un drive y un revés rectos al círculo central.","El tercer golpe es un globo recto: bien alto, por arriba del círculo central.","Dejalo picar y rematá con smash hacia el piso, entre la pared y la primera línea.","Controlá la devolución con una volea suave y arrancá de nuevo."],
+    cue:"Mano libre arriba señalando la pelota en el remate."},
+  media:{phase:"Avanzado",name:"Fondo, media volea, volea",
+    how:["Desde el fondo, en el pasillo central, pegá un golpe recto con pique.","Avanzá a la segunda línea y jugá la siguiente justo después del pique (media volea), raqueta baja y cara firme.","Seguí avanzando y pegá una volea recta al círculo central.","Retrocedé y repetí."],
+    cue:"Bajá con las piernas, no con la espalda."},
+  voleaAlt:{phase:"Red",name:"Voleas alternadas",
+    how:["Parate entre la primera y la segunda línea, en el pasillo central.","Voleas rectas al círculo central: la pelota vuelve derecho.","Alterná volea de drive y de revés corriendo el cuerpo medio paso a un lado o al otro.","Empuñadura continental para las dos, sin swing."],
+    cue:"Mirá la pelota hasta que toque las cuerdas."},
+  rally:{phase:"Peloteo",name:"Récord de peloteo",
+    how:["Pelotea libremente desde tu posición del día, con un pique.","Todo golpe tiene que pegar arriba de la línea blanca.","Contá los golpes seguidos sin error y anotá tu mejor serie."],
+    cue:"Peloteo largo antes que fuerte: el récord se hace con control.", counter:"Mejor serie de golpes seguidos", rally:true},
+  rallyVolea:{phase:"Peloteo",name:"Peloteo de volea",
+    how:["Entre la primera y la segunda línea, voleas seguidas sin pique.","Pegá recto para mantener el ritmo; mezclá drive y revés según venga.","Contá golpes seguidos y anotá tu mejor serie."],
+    cue:"Si te apurás, bajá la fuerza, no la concentración.", counter:"Mejor serie de voleas seguidas", rally:true},
+  sliceBajo:{phase:"Efectos",name:"Slice de revés rasante",
+    how:["Parate frente al círculo {Ro}.","Empuñadura continental, raqueta arriba y atrás, y bajá cortando la pelota de arriba hacia abajo.","Apuntá recto, justo arriba de la línea blanca y por debajo del círculo {Ro}.","La pelota vuelve baja y patinando: flexioná rodillas para el siguiente slice."],
+    cue:"El slice se termina con la raqueta adelante, no cruzada al cuerpo."},
+  sliceDef:{phase:"Efectos",name:"Slice agresivo y defensa alta",
+    how:["Frente al círculo {Ro}, pegá un slice agresivo y bajo, rasante a la línea blanca.","La pelota vuelve rápida y baja: respondé con un golpe defensivo alto, por arriba de los círculos.","La pelota vuelve lenta y alta y te da tiempo: preparate y volvé a pegar el slice agresivo.","Ciclo: slice bajo, defensa alta, slice bajo. Hacelo también de drive."],
+    cue:"La defensa alta es para ganar tiempo: abrí la cara de la raqueta y terminá arriba.", counter:"Mejores ciclos seguidos (slice + defensa)"},
+  topSlice:{phase:"Efectos",name:"Top spin y slice",
+    how:["Parate frente al círculo central.","Drive con top spin: de abajo hacia arriba, al centro del círculo. Pica alto.","Revés con slice: cortado, bajo, entre el círculo y la línea blanca. Vuelve bajo.","Alterná un golpe de cada uno, acomodándote al costado de la pelota que vuelve recta."],
+    cue:"Top spin sube, slice baja: cada efecto pide otra altura de impacto."},
+  sliceCruz:{phase:"Efectos",name:"Cruzados con efecto",
+    how:["Desde la mitad {Ra}, pegá un revés con slice bajo al círculo central: cruza a la mitad {Da}.","Desplazate y pegá un drive con top spin al círculo central: vuelve a la mitad {Ra}.","Seguí el ciclo slice, top spin, siempre cruzando.","Si la pelota te queda baja, usá slice también de drive."],
+    cue:"El slice llega más lento al otro lado: aprovechá para recuperar."},
+  ritmo:{phase:"Cambio de ritmo",name:"Alto y fuerte",
+    how:["Frente al círculo {Do}, pegá un drive con top spin alto, por arriba del círculo: vuelve alta y lenta.","Con ese tiempo extra, acomodate y pegá un drive plano y fuerte al centro del círculo.","La pelota vuelve rápida: controlala con un golpe medio y empezá otra vez con el alto.","Hacé el mismo ciclo de revés frente al círculo {Ro}."],
+    cue:"El golpe alto te da tiempo; el fuerte te lo quita. Prepará antes cuando venga rápida.", counter:"Ciclos completos seguidos (alto, fuerte, control)"},
+  ritmoMix:{phase:"Cambio de ritmo",name:"Tres alturas, tres ritmos",
+    how:["Parate frente al círculo central y alterná tres golpes:","Alto con top spin, por arriba del círculo: vuelve lento.","Plano y fuerte, al centro del círculo: vuelve rápido.","Slice bajo, entre el círculo y la línea blanca: vuelve bajo y patinando.","Decí en voz alta el próximo golpe antes de pegar (alto, fuerte, bajo) y nunca repitas el mismo dos veces seguidas."],
+    cue:"Variar ritmo y altura es lo que saca de posición a un rival."},
+  ritmoCruz:{phase:"Cambio de ritmo",name:"Ritmo y dirección",
+    how:["Desde la mitad {Da}, pegá un top spin alto y recto, por arriba del círculo {Do}.","El siguiente, plano y fuerte al círculo central: cruza rápido a la mitad {Ra}.","Corré y defendé con un revés alto al círculo central: vuelve lento a la mitad {Da}.","Repetí el ciclo: alto, fuerte cruzado, defensa alta."],
+    cue:"Después del golpe fuerte, la pelota vuelve rápida: arrancá a moverte apenas pegás.", counter:"Ciclos completos seguidos"},
+  estira:{phase:"Vuelta a la calma",name:"Estiramientos",
+    how:["Antebrazo: brazo extendido, tirá los dedos hacia atrás 20 s por lado.","Hombro: brazo cruzado sobre el pecho, 20 s por lado.","Cuádriceps e isquios: 20 s por pierna.","Respiración lenta: 5 inhalaciones profundas."],
+    cue:"Estirá sin rebotes y sin dolor."}
+};
+
+// ---------- Programa (40 min por sesión) ----------
+const LEVELS = [
+  {name:"Nivel 1 · Base", note:"Siempre con un pique. Combinás drive, revés y las primeras voleas.", sessions:[
+    {t:"Primer contacto con la pared", s:[["movilidad",4],["sombra",3],["alterno",10],["dosydos",9],["rally",10],["estira",4]]},
+    {t:"Ritmo con pique", s:[["movilidad",4],["split",2],["dosydos",9],["lateral",9],["ruleta",12],["estira",4]]},
+    {t:"Primeras voleas", s:[["movilidad",4],["split",2],["alterno",8],["pv",12],["rally",10],["estira",4]]},
+    {t:"Control de base", s:[["movilidad",4],["split",2],["tres",10],["pv",10],["ruleta",10],["estira",4]]}
+  ]},
+  {name:"Nivel 2 · Intermedio", note:"Más profundidad, transiciones al frente y primer saque.", sessions:[
+    {t:"Distancia y profundidad", s:[["movilidad",4],["split",2],["dosydos",8,"Pegá medio metro arriba de la línea"],["escalera",10],["ritmo",6,"Fuerte sin perder control"],["ruleta",6],["estira",4]]},
+    {t:"Volea y transición", s:[["movilidad",4],["split",2],["voleaAlt",6],["pv",10],["escalera",8],["rallyVolea",6],["estira",4]]},
+    {t:"Primer saque", s:[["movilidad",4],["sombra",2],["saquePrimer",12],["lateral",8],["ruleta",10],["estira",4]]},
+    {t:"Precisión en movimiento", s:[["movilidad",4],["split",2],["blanco",10],["tres",8,"Ritmo medio"],["pv",12],["estira",4]]}
+  ]},
+  {name:"Nivel 3 · Avanzado", note:"Golpes sin pique, saque y remate, peloteos largos desde el fondo.", sessions:[
+    {t:"Media volea y transición", s:[["movilidad",4],["split",2],["media",10],["escalera",10],["ruleta",10],["estira",4]]},
+    {t:"Saque y remate", s:[["movilidad",4],["sombra",2],["saquePrimer",10],["remate",10],["rallyVolea",10],["estira",4]]},
+    {t:"Ritmo de partido", s:[["movilidad",4],["split",2],["lateral",8,"Ritmo alto"],["ritmo",8],["tres",8,"Sin dejar picar en el central"],["ruleta",6],["estira",4]]},
+    {t:"Prueba final", s:[["movilidad",4],["split",2],["saquePrimer",8],["escalera",8],["media",6],["rally",8,"Intentá superar tu récord"],["estira",4]]}
+  ]},
+  {name:"Nivel 4 · Efectos", note:"Slice, top spin y cambios de ritmo: atacar bajo o fuerte, defender alto.", sessions:[
+    {t:"El slice", s:[["movilidad",4],["sombra",2,"Sumá el slice al ciclo"],["sliceBajo",10],["topSlice",10],["rally",10,"Usando slice y top spin"],["estira",4]]},
+    {t:"Ataque y defensa", s:[["movilidad",4],["split",2],["sliceDef",12],["sliceCruz",10],["ruleta",8],["estira",4]]},
+    {t:"Efectos en movimiento", s:[["movilidad",4],["split",2],["sliceCruz",8],["ritmoMix",8],["tres",8,"Top spin en el drive, slice en el revés"],["rallyVolea",6],["estira",4]]},
+    {t:"Prueba de efectos", s:[["movilidad",4],["split",2],["sliceDef",10],["ritmoCruz",8],["ruleta",12,"Mezclá alturas, ritmos, slice y voleas"],["estira",4]]}
+  ]}
+];
+const ALL = LEVELS.flatMap((l,li)=>l.sessions.map((s,si)=>({...s,li,si,key:li+"-"+si,n:li*4+si+1})));
+
+// ---------- Estado guardado ----------
+let store = {done:{}, best:0, minutes:0, notes:{}, hand:"zurdo"};
+try{ const raw = localStorage.getItem("paredon"); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
+function save(){ try{ localStorage.setItem("paredon", JSON.stringify(store)); }catch(e){} }
+const lefty = () => store.hand==="zurdo";
+function tx(t){
+  const z = lefty();
+  return t.replace(/\{Do\}/g, z?"izquierdo":"derecho").replace(/\{Da\}/g, z?"izquierda":"derecha")
+          .replace(/\{Ro\}/g, z?"derecho":"izquierdo").replace(/\{Ra\}/g, z?"derecha":"izquierda");
+}
+
+// ---------- Esquema de tu frontón (dibujado para diestro, espejado para zurdo) ----------
+const CX=[70,170,270], CY=40, FT=112, PXM=12;
+const fy = m => FT + m*PXM;
+const D=262, V=78, C=170; // D: frente al círculo del drive, V: frente al del revés (diestro)
+// pts: posiciones [x, metros]; shots: [desde, x en la pared, hacia]; move: desplazamiento
+function lay(id, li){
+  const b = BASE_M[li], s = SPOT[li];
+  const T = {
+    split:{txt:s+", de lado a lado", pts:[[V+20,b],[D-20,b]], move:"both"},
+    tres:{txt:s+", de un círculo al otro", pts:[[270,b],[C,b],[70,b]], shots:[[0,270,0],[0,220,1],[1,170,1],[1,120,2],[2,70,2]], tl:["revés","drive y revés","drive"]},
+    alterno:{txt:s+", de una mitad a la otra", pts:[[D,b],[V,b]], shots:[[0,170,1],[1,170,0]], tl:["","cruzado",""]},
+    lateral:{txt:s+", bien abierto", pts:[[D+20,b],[V-20,b]], shots:[[0,170,1],[1,170,0]], tl:["","cruzado",""]},
+    dosydos:{txt:s+", recto y cruzado", pts:[[D,b],[V,b]], shots:[[0,270,0],[0,170,1],[1,70,1],[1,170,0]], tl:["recto","cruzado","recto"]},
+    blanco:{txt:s+" y subida a volear", pts:[[D,b],[V,b],[C,3.4]], shots:[[0,270,0],[1,70,1],[2,170,2]], tl:["revés","volea","drive"]},
+    pv:{txt:"Pasillo central, subís a volear", pts:[[C,Math.max(b,7)],[C,3.2]], shots:[[0,170,0],[1,170,1]], move:"one"},
+    media:{txt:"Del fondo a la volea", pts:[[C,10.5],[C,5.5],[C,3.2]], shots:[[0,170,0]], move:"one"},
+    escalera:{txt:"Del fondo hasta la primera línea", pts:[[C,11],[C,8.5],[C,6],[C,3.2]], shots:[[0,170,0]], move:"one"},
+    saquePrimer:{txt:"Fondo, en el pasillo central", pts:[[C,11.2],[C,3.2]], shots:[[0,170,0]], move:"one"},
+    remate:{txt:s+", pasillo central", pts:[[C,b]], shots:[[0,170,0]]},
+    ruleta:{txt:s, pts:[[C,b]], shots:[[0,170,0]]},
+    rally:{txt:s, pts:[[C,b]], shots:[[0,170,0]]},
+    voleaAlt:{txt:"Entre la primera y la segunda línea", pts:[[C,3.5]], shots:[[0,170,0]]},
+    rallyVolea:{txt:"Entre la primera y la segunda línea", pts:[[C,3.5]], shots:[[0,170,0]]},
+    sliceBajo:{txt:s+", frente al círculo del revés", pts:[[V,b]], shots:[[0,70,0,68]], marks:[[70,64,"rasante"]]},
+    sliceDef:{txt:s+", frente al círculo del revés", pts:[[V,b]], shots:[[0,70,0,68],[0,70,0,8]], marks:[[70,64,"slice bajo"],[70,6,"defensa alta"]]},
+    topSlice:{txt:s+", frente al central", pts:[[C,b]], shots:[[0,170,0,40],[0,170,0,68]], marks:[[170,22,"top spin"],[170,64,"slice"]]},
+    sliceCruz:{txt:s+", cruzando con efecto", pts:[[V,b],[D,b]], shots:[[0,170,1,68],[1,170,0,40]], marks:[[170,22,"top spin"],[170,64,"slice"]]},
+    ritmo:{txt:s+", frente al círculo del drive", pts:[[D,b]], shots:[[0,270,0,6],[0,270,0,40]], marks:[[270,8,"alto con top"],[270,42,"fuerte"]]},
+    ritmoMix:{txt:s+", frente al central", pts:[[C,b]], shots:[[0,170,0,6],[0,170,0,40],[0,170,0,68]], marks:[[170,8,"alto"],[170,42,"fuerte"],[170,66,"slice"]]},
+    ritmoCruz:{txt:s+", alto, fuerte y defensa", pts:[[D,b],[V,b]], shots:[[0,270,0,6],[0,170,1,40],[1,170,0,6]], marks:[[270,8,"alto"],[170,42,"fuerte"]]},
+    _regla:{txt:"Recto vuelve recto, en diagonal cruza", pts:[[D,6.5],[V,6.5]], shots:[[0,270,0],[0,170,1]], tl:["","diagonal","recto"]}
+  };
+  return T[id]||null;
+}
+function fig(id, li){
+  const w0 = lay(id, li); if(!w0) return "";
+  const z = lefty(), mx = x => z ? 340-x : x;
+  const w = {...w0, pts:(w0.pts||[]).map(p=>[mx(p[0]),p[1]]), shots:(w0.shots||[]).map(([a,x,r,y])=>[a,mx(x),r,y]), marks:(w0.marks||[]).map(([x,y,t])=>[mx(x),y,t]), tl:z?[...(w0.tl||[])].reverse():(w0.tl||[])};
+  const on = w.shots.map(x=>x[1]);
+  const lab = (x,y,t,a="end")=>`<text x="${x}" y="${y}" text-anchor="${a}" fill="#fff" font-size="9" font-family="JetBrains Mono,monospace" opacity=".85">${t}</text>`;
+  let s = `<rect x="0" y="0" width="340" height="${FT}" fill="var(--wallpaint)"/>
+    <rect x="0" y="74" width="340" height="5" fill="#fff"/>${lab(6,92,"línea blanca = red","start")}
+    <rect x="0" y="${FT}" width="340" height="${12*PXM}" fill="var(--floorpaint)"/>
+    <line x1="150" y1="${FT}" x2="150" y2="${fy(12)}" stroke="#fff" stroke-width="1.5" opacity=".7"/>
+    <line x1="190" y1="${FT}" x2="190" y2="${fy(12)}" stroke="#fff" stroke-width="1.5" opacity=".7"/>
+    ${[1.5,5.5].map(m=>`<line x1="0" y1="${fy(m)}" x2="150" y2="${fy(m)}" stroke="#fff" stroke-width="1.5" opacity=".7"/><line x1="190" y1="${fy(m)}" x2="340" y2="${fy(m)}" stroke="#fff" stroke-width="1.5" opacity=".7"/>`).join("")}
+    ${lab(336,fy(1.5)-3,"1ª línea")}${lab(336,fy(5.5)-3,"2ª línea")}${lab(336,fy(12)-4,"fondo · 12 m")}`;
+  CX.forEach((x,i)=>{
+    s += `<circle cx="${x}" cy="${CY}" r="17" fill="#fff" ${on.includes(x)?'stroke="var(--ball)" stroke-width="5"':'opacity=".5"'}/>`;
+    if(w.tl[i]) s += `<text x="${x}" y="${CY+32}" text-anchor="middle" fill="#fff" font-size="10" font-family="JetBrains Mono,monospace">${w.tl[i]}</text>`;
+  });
+  w.shots.forEach(([a,x,r,yy])=>{
+    const P=w.pts[a], Q=w.pts[r], y=yy??CY+17;
+    s += `<line x1="${P[0]}" y1="${fy(P[1])}" x2="${x}" y2="${y}" stroke="var(--ball)" stroke-width="2.5"/>`;
+    s += `<line x1="${x}" y1="${y}" x2="${Q[0]+(a===r?6:0)}" y2="${fy(Q[1])-9}" stroke="#fff" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#a)"/>`;
+    if(!CX.includes(x)) s += `<path d="M${x-5} ${y} h10 M${x} ${y-5} v10" stroke="var(--ball)" stroke-width="2.5"/>`;
+  });
+  w.marks.forEach(([x,y,t])=>{ const r=x>200; s += `<text x="${r?x-22:x+22}" y="${y+4}" text-anchor="${r?"end":"start"}" fill="var(--ball)" font-size="10" font-weight="700" font-family="JetBrains Mono,monospace">${t}</text>`; });
+  if(w.move){
+    const d = w.pts.map((p,i)=>(i?"L":"M")+(p[0]+(w.move==="one"?14:0))+" "+(fy(p[1])+(w.move==="both"?14:0))).join(" ");
+    s += `<path d="${d}" fill="none" stroke="var(--ball)" stroke-width="2" stroke-dasharray="2 3" marker-end="url(#m)" ${w.move==="both"?'marker-start="url(#m)"':""}/>`;
+  }
+  w.pts.forEach(p=>{ s += `<circle cx="${p[0]}" cy="${fy(p[1])}" r="7" fill="var(--ball)" stroke="#17231b" stroke-width="1.5"/>`; });
+  const legend = w.shots.length?`<div class="legend"><span><i></i>tu golpe</span><span><i class="vuelta"></i>vuelta de la pared</span>${w.shots.some(t=>!CX.includes(t[1]))?`<span>+ apuntá entre círculos</span>`:""}${w.move?`<span><i class="mov"></i>tu desplazamiento</span>`:""}</div>`:"";
+  return `<div class="wallfig"><svg viewBox="0 0 340 ${fy(12)}" role="img" aria-label="Esquema del frontón: ${w.txt}"><defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fff"/></marker><marker id="m" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--ball)"/></marker></defs>${s}</svg>${legend}</div>`;
+}
+
+// ---------- Vista Programa ----------
+const $ = id => document.getElementById(id);
+function handToggle(){
+  return `<div class="hand" role="group" aria-label="Mano hábil"><span>Juego de</span><button id="h-zurdo" aria-pressed="${lefty()}">Zurda</button><button id="h-diestro" aria-pressed="${!lefty()}">Derecha</button></div>`;
+}
+function renderHeader(){
+  const n = Object.keys(store.done).length;
+  $("netfill").style.width = (n/ALL.length*100)+"%";
+  $("netlabel").textContent = `Línea de red · ${n} de ${ALL.length} sesiones`;
+}
+function renderProgram(){
+  const n = Object.keys(store.done).length;
+  const next = ALL.find(s=>!store.done[s.key]);
+  let h = handToggle() + `<div class="stats">
+    <div class="stat"><b>${n}/${ALL.length}</b><span>sesiones</span></div>
+    <div class="stat"><b>${store.best||"–"}</b><span>récord de peloteo</span></div>
+    <div class="stat"><b>${Math.round(store.minutes)}</b><span>minutos en la pared</span></div></div>`;
+  if(next) h += `<div class="row"><button class="btn ball" data-open="${next.key}">Seguir: sesión ${next.n} · ${next.t}</button></div>`;
+  LEVELS.forEach((l,li)=>{
+    h += `<div class="level"><div class="level-head"><h2 style="margin:0">${l.name}</h2><span class="meta">${SPOT[li]}</span></div><p class="lead" style="margin-top:6px">${l.note}</p><div class="sessions">`;
+    l.sessions.forEach((s,si)=>{
+      const key=li+"-"+si, mins=s.s.reduce((a,x)=>a+x[1],0), d=store.done[key];
+      h += `<button class="sess" data-open="${key}"><span class="num">${li*4+si+1}</span><span class="body"><span class="t">${s.t}</span><br><span class="d">${s.s.length} pasos · ${mins} min</span></span><span class="chip ${d?"ok":""}">${d?"Hecha "+d:"Pendiente"}</span></button>`;
+    });
+    h += `</div></div>`;
+  });
+  h += `<p class="note">El progreso se guarda en este navegador. <button class="back" id="reset" style="margin:0;padding:0">Borrar progreso</button><span id="resetconfirm" hidden> · ¿Seguro? <button class="back" id="resetyes" style="margin:0;padding:0">Sí, borrar</button></span></p>`;
+  $("view-prog").innerHTML = h;
+  renderHeader();
+}
+
+// ---------- Vista Sesión ----------
+let cur=null, step=0, left=0, tick=null, wake=null, actx=null;
+function openSession(key){
+  cur = ALL.find(s=>s.key===key); step=0; stopTimer();
+  left = cur.s[0][1]*60;
+  show("sess"); renderStep();
+  window.scrollTo(0,0);
+}
+function fmt(s){ return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
+function renderStep(){
+  const total = cur.s.length;
+  let bar = cur.s.map((_,i)=>`<i class="${i<step?"done":i===step?"on":""}"></i>`).join("");
+  if(step>=total){
+    $("view-sess").innerHTML = `<button class="back" id="toprog">← Programa</button><div class="steps-bar">${bar}</div>
+      <div class="card finish"><div class="phase">Sesión ${cur.n} completa</div><h2>${cur.t}</h2>
+      <p class="lead">40 minutos de trabajo. Récord de peloteo: ${store.best||"sin registrar"}.</p>
+      <div class="row" style="justify-content:center"><button class="btn ball" id="next">Siguiente sesión</button><button class="btn ghost" id="toprog2">Volver al programa</button></div></div>`;
+    return;
+  }
+  const [id,min,meta] = cur.s[step], e = EX[id], w = lay(id,cur.li);
+  const val = (store.notes[cur.key+"-"+step]??"");
+  $("view-sess").innerHTML = `<button class="back" id="toprog">← Programa</button>
+    <div class="eyebrow" style="color:var(--muted)">Sesión ${cur.n} · ${cur.t}</div>
+    <div class="steps-bar">${bar}</div>
+    <div class="card">
+      <div class="phase">Paso ${step+1} de ${total} · ${e.phase}</div>
+      <h3 style="font-size:30px;margin-top:2px">${e.name}</h3>
+      <div class="target"><span class="chip">${min} min</span>${w?`<span class="chip">${w.txt}</span>`:""}${meta?`<span class="chip">${meta}</span>`:""}</div>
+      ${fig(id,cur.li)}
+      <ol class="how">${e.how.map(x=>`<li>${tx(x)}</li>`).join("")}</ol>
+      <div class="cue">${tx(e.cue)}</div>
+      ${e.counter?`<div class="counter"><label for="cnt">${e.counter}</label><input id="cnt" type="number" inputmode="numeric" min="0" value="${val}"></div>`:""}
+      <div class="timer"><span class="clock" id="clock">${fmt(left)}</span>
+        <button class="btn" id="play">${tick?"Pausa":"Empezar"}</button>
+        <button class="btn ghost" id="restart">Reiniciar</button></div>
+      <div class="row"><button class="btn ghost" id="prev" ${step===0?"disabled":""}>Anterior</button><button class="btn ball" id="nextstep">${step===total-1?"Terminar sesión":"Siguiente paso"}</button></div>
+    </div>`;
+}
+function beep(){
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    [0,0.25,0.5].forEach(t=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.2,actx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t+.2);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+.2);});
+  }catch(e){}
+  try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
+}
+function startTimer(){
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  try{ navigator.wakeLock && navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{}); }catch(e){}
+  tick = setInterval(()=>{
+    left--; store.minutes += 1/60;
+    const c=$("clock"); if(c) c.textContent=fmt(Math.max(left,0));
+    if(left<=0){ stopTimer(); save(); beep(); const p=$("play"); if(p) p.textContent="Tiempo"; }
+  },1000);
+}
+function stopTimer(){ clearInterval(tick); tick=null; try{ wake && wake.release(); }catch(e){} wake=null; }
+function saveCounter(){
+  const c=$("cnt"); if(!c||c.value==="") return;
+  const v=parseInt(c.value,10); if(isNaN(v)) return;
+  store.notes[cur.key+"-"+step]=v;
+  if(EX[cur.s[step][0]].rally && v>store.best) store.best=v;
+  save();
+}
+function goStep(d){
+  saveCounter(); stopTimer(); step+=d;
+  if(step>=cur.s.length){ store.done[cur.key]=new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"}); save(); }
+  else left=cur.s[step][1]*60;
+  renderStep(); window.scrollTo(0,0);
+}
+
+// ---------- Fundamentos ----------
+function renderBase(){
+  $("view-base").innerHTML = `<h2>Tu frontón</h2><p class="lead">Todos los ejercicios usan las marcas de tu pared y del piso.</p>
+  ${handToggle()}
+  ${fig("_regla",0)}
+  <details open><summary>La regla de la pared</summary><p>La pared es plana, así que la pelota sale con el mismo ángulo con que pega. Si pegás recto, vuelve recta a vos. Si pegás en diagonal, sale en la diagonal opuesta.</p><ul><li>Para quedarte donde estás: pegale al círculo que tenés enfrente.</li><li>Para moverte un círculo: apuntá a mitad de camino entre los dos.</li><li>Para cruzar de una punta a la otra: apuntá al círculo central.</li></ul></details>
+  <details><summary>Las marcas</summary><ul>
+    <li><b>Línea blanca:</b> es la red. Todo golpe tiene que pegar arriba.</li>
+    <li><b>Tres círculos:</b> ${tx("frente al círculo {Do} pegás drives rectos, frente al {Ro} reveses rectos")}. Frente al central alternás drive y revés, y es el blanco de voleas, saque y remate.</li>
+    <li><b>Pasillo central:</b> la franja entre las dos líneas largas del piso. Es tu lugar de recuperación y desde donde sacás.</li>
+    <li><b>Primera línea:</b> la transversal cerca de la pared. <b>Segunda línea:</b> la de mitad de cancha. <b>Fondo:</b> el final de los 12 m.</li>
+  </ul></details>
+  <details><summary>Beneficios del programa</summary><ul>
+    <li><b>Muchos golpes en poco tiempo:</b> la pared siempre devuelve, así que en 40 minutos pegás mucho más que en un peloteo.</li>
+    <li><b>Progresión ordenada:</b> de golpes con pique a voleas, saque, efectos y cambios de ritmo, nivel por nivel.</li>
+    <li><b>Golpes combinados:</b> alternar drive, revés, volea, slice y top spin hace las sesiones más llevaderas y entrena la elección de golpe.</li>
+    <li><b>Precisión:</b> los tres círculos te dan un blanco en cada golpe y la línea blanca te obliga a pasar la red.</li>
+    <li><b>Movimiento:</b> split-step, cruzados y subidas a la red trabajan piernas, anticipación y recuperación al centro.</li>
+    <li><b>Control de dirección:</b> usar la regla de la pared plana te enseña a mandar la pelota adonde querés.</li>
+    <li><b>Ritmo y altura:</b> variar entre alto, fuerte y bajo desarrolla el control de efectos para sacar de posición a un rival.</li>
+    <li><b>Seguimiento:</b> el temporizador y el registro de récords y sesiones muestran tu progreso.</li>
+    <li><b>A tu medida:</b> adaptado a tu frontón y a tu mano, para entrenar solo cuando quieras.</li>
+    <li><b>Cuidado del cuerpo:</b> cada sesión incluye calentamiento y estiramientos, con días de descanso entre sesiones.</li>
+  </ul></details>
+  <details><summary>Dónde pararte en cada nivel</summary><ul><li>Nivel 1: sobre la segunda línea.</li><li>Nivel 2: 2 a 3 m detrás de la segunda línea.</li><li>Niveles 3 y 4: en el fondo de la cancha.</li><li>Voleas: entre la primera y la segunda línea, en todos los niveles.</li></ul></details>
+  <details><summary>Empuñaduras</summary><ul><li>Drive: semi-western o eastern.</li><li>Revés: eastern de revés, o a dos manos.</li><li>Volea, saque, smash y slice: continental (como agarrando un martillo).</li></ul><p>En el círculo central, donde alternás drive y revés, practicá el cambio de empuñadura en cada golpe.</p></details>
+  <details><summary>Frecuencia recomendada</summary><p>3 sesiones de 40 minutos por semana con un día de descanso entre ellas. El programa completo lleva unas 5 a 6 semanas. Si una sesión te costó mucho, repetila antes de pasar a la siguiente.</p></details>
+  <details><summary>Cuidar el brazo</summary><p>Si aparece dolor en el codo o la muñeca, bajá la intensidad y acercate a la pared. Un dolor que persiste varios días merece consulta con un profesional.</p></details>`;
+}
+
+// ---------- Multimedia ----------
+const MEDIA = [
+  {who:"Guillermo Vilas", kind:"Nota · 0223 · Mar del Plata", txt:"De chico, en el Club Náutico de Mar del Plata, pasaba los fines de semana peloteando en el frontón mientras los grandes jugaban en polvo de ladrillo. Contó con nostalgia que ahí arrancó toda su generación.", url:"https://www.0223.com.ar/nota/2010-3-25-guillermo-vilas-profeta-en-el-club-que-lo-vio-nacer-el-nautico-de-mar-del-plata", btn:"Ver nota"},
+  {who:"Guillermo Vilas", kind:"Nota · DIB", txt:"El zurdo marplatense pasó horas golpeando contra un frontón mientras otros chicos iban a la playa, antes de entrenar con Felipe Locicero desde los 11 años.", url:"https://dib.com.ar/adn-bonaerense/guillermo-vilas-los-74-anos-del-marplatense-que-convirtio-su-raqueta-bandera-n54853", btn:"Ver nota"},
+  {who:"Roger Federer", kind:"Video · Instagram · abril 2020", txt:"Durante la cuarentena publicó un video volando contra una pared verde en su casa, y desafió a los fans a mandar sus propios ejercicios en solitario.", url:"https://www.instagram.com/p/B-rjLx5FoJg/", btn:"Ver video"},
+  {who:"Roger Federer", kind:"Nota · Eurosport", txt:"Cómo se viralizó su desafío de voleas contra la pared y las respuestas de otros jugadores.", url:"https://www.eurosport.com/tennis/tennis-news-roger-federer-isolation-volley-challenge-goes-viral-on-social-media_sto7723423/story.shtml", btn:"Ver nota"},
+  {who:"Novak Djokovic", kind:"Nota · Fox Sports · 2016", txt:"Volvió al frontón de Kopaonik, en Serbia, donde empezó a jugar de chico. Lo mostró en vivo por Facebook y lo llamó su pared preferida en el mundo.", url:"https://www.foxsports.com/stories/tennis/must-watch-novak-djokovic-visits-war-ravaged-tennis-courts-of-his-youth", btn:"Ver nota"},
+  {who:"Novak Djokovic", kind:"Nota · La Opinión (en español)", txt:"La historia de ese frontón marcado por la guerra, y su broma de que la pared es el mejor compañero porque nunca falla.", url:"https://laopinion.com/?p=1122643", btn:"Ver nota"},
+  {who:"Brad Gilbert", kind:"Video · Instagram · 2020", txt:"El excoach de Agassi y comentarista de ESPN usa cualquier pared que encuentre para practicar voleas. Es parte de su serie de consejos para entrenar en casa.", url:"https://www.instagram.com/tv/B-iLwjIAC7e/", btn:"Ver video"},
+  {who:"Judy Murray", kind:"Ejercicios · Coach", txt:"La madre y entrenadora de Andy y Jamie Murray propone ejercicios de pared para trabajar coordinación y la mano no hábil.", url:"https://www.coachweb.com/sport/8611/wall-tennis-practice-drills-from-judy-murray-to-improve-your-game", btn:"Ver ejercicios"},
+  {who:"Federer, Paes, Kenin y otros", kind:"Nota · Tennis.com", txt:"Un homenaje al frontón: profesionales que entrenaron contra la pared en 2020 y cinco consejos de práctica.", url:"https://tennis.com/pro-game/2020/06/practice-food-thought/89127", btn:"Ver nota"},
+  {who:"Agassi, McEnroe y Judy Murray", kind:"Nota · HEAD", txt:"Por qué la pared es el compañero de práctica perfecto, con recuerdos de jugadores que imitaban a sus ídolos contra el frontón.", url:"https://www.head.com/rs/stories/the-tennis-wall", btn:"Ver nota"}
+];
+function renderMedia(){
+  $("view-media").innerHTML = `<h2>Documentación multimedia</h2><p class="lead">Grandes jugadores que entrenan o entrenaron contra la pared. Los links se abren en otra pestaña.</p>
+  <div class="sessions">${MEDIA.map(m=>`<a class="sess media" href="${m.url}" target="_blank" rel="noopener"><span class="body"><span class="eyebrow" style="color:var(--court)">${m.kind}</span><br><span class="t">${m.who}</span><br><span class="d">${m.txt}</span></span><span class="chip">${m.btn} ↗</span></a>`).join("")}</div>
+  <p class="note">Algunos videos están en Instagram y pueden pedir que inicies sesión.</p>`;
+}
+
+// ---------- Navegación ----------
+function show(v){
+  ["prog","sess","base","media"].forEach(x=>$("view-"+x).hidden = x!==v);
+  $("tab-prog").setAttribute("aria-selected", v==="prog"||v==="sess");
+  $("tab-base").setAttribute("aria-selected", v==="base");
+  $("tab-media").setAttribute("aria-selected", v==="media");
+}
+document.addEventListener("click",ev=>{
+  const t=ev.target.closest("button"); if(!t) return;
+  if(t.dataset.open) return openSession(t.dataset.open);
+  switch(t.id){
+    case "h-zurdo": case "h-diestro": store.hand = t.id==="h-zurdo"?"zurdo":"diestro"; save(); renderProgram(); renderBase(); break;
+    case "tab-prog": stopTimer(); renderProgram(); show("prog"); break;
+    case "tab-base": stopTimer(); show("base"); break;
+    case "tab-media": stopTimer(); show("media"); break;
+    case "toprog": case "toprog2": saveCounter(); stopTimer(); renderProgram(); show("prog"); break;
+    case "play": if(tick){stopTimer(); t.textContent="Empezar";} else { if(left<=0) left=cur.s[step][1]*60; startTimer(); t.textContent="Pausa"; } save(); break;
+    case "restart": stopTimer(); left=cur.s[step][1]*60; renderStep(); break;
+    case "prev": goStep(-1); break;
+    case "nextstep": goStep(1); break;
+    case "next": { const i=ALL.indexOf(cur); if(ALL[i+1]) openSession(ALL[i+1].key); else {renderProgram(); show("prog");} break; }
+    case "reset": $("resetconfirm").hidden=false; break;
+    case "resetyes": store={done:{},best:0,minutes:0,notes:{},hand:store.hand}; save(); renderProgram(); break;
+  }
+});
+document.addEventListener("change",ev=>{ if(ev.target.id==="cnt") saveCounter(); });
+renderProgram(); renderBase(); renderMedia();
+</script>
+
+</body>
+</html>
