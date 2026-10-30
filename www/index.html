@@ -100,6 +100,14 @@ details p,details ul{margin:0 0 12px}
 .hand{display:flex;align-items:center;gap:6px;margin:4px 0 12px;font-size:14px;color:var(--muted)}
 .hand button{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 14px var(--f-body);padding:7px 14px;border-radius:99px;cursor:pointer}
 .hand button[aria-pressed="true"]{background:var(--court);border-color:var(--court);color:#fff}
+.alarmset{flex-wrap:wrap;margin:12px 0 0}
+.alarmset .test{border:0;background:none;color:var(--court);text-decoration:underline;padding:7px 4px}
+.alarm{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(23,35,27,.94);color:#fff;text-align:center}
+.alarm .phase{color:var(--ball);font-size:14px}
+.alarm h2{font-size:clamp(40px,12vw,64px);margin:6px 0 4px;line-height:.95}
+.alarm p{margin:0 0 20px;opacity:.9}
+.alarm .row{justify-content:center}
+.alarm .btn.ghost{color:#fff;border-color:rgba(255,255,255,.5)}
 .sess.media{text-decoration:none;align-items:flex-start}
 nav.tabs button{font-size:14px;padding:10px 4px}
 </style>
@@ -129,6 +137,10 @@ nav.tabs button{font-size:14px;padding:10px 4px}
   <section id="view-media" hidden></section>
 </main>
 
+<div id="alarm" class="alarm" role="alertdialog" aria-labelledby="alarm-h" hidden><div>
+  <div class="phase">Cronómetro en cero</div><h2 id="alarm-h">¡Tiempo!</h2><p id="alarm-t"></p>
+  <div class="row"><button class="btn ball" id="alarm-next">Siguiente paso</button><button class="btn ghost" id="alarm-ok">Cerrar</button></div>
+</div></div>
 <script>
 // ---------- Tu frontón ----------
 // Pared plana verde: línea blanca (red) y tres círculos. Piso de 12 m con pasillo central,
@@ -246,7 +258,7 @@ const LEVELS = [
 const ALL = LEVELS.flatMap((l,li)=>l.sessions.map((s,si)=>({...s,li,si,key:li+"-"+si,n:li*4+si+1})));
 
 // ---------- Estado guardado ----------
-let store = {done:{}, best:0, minutes:0, notes:{}, hand:"zurdo"};
+let store = {done:{}, best:0, minutes:0, notes:{}, hand:"zurdo", alarm:"fuerte"};
 try{ const raw = localStorage.getItem("paredon"); if(raw) store = Object.assign(store, JSON.parse(raw)); }catch(e){}
 function save(){ try{ localStorage.setItem("paredon", JSON.stringify(store)); }catch(e){} }
 const lefty = () => store.hand==="zurdo";
@@ -359,7 +371,7 @@ let cur=null, step=0, left=0, tick=null, wake=null, actx=null;
 function openSession(key){
   cur = ALL.find(s=>s.key===key); step=0; stopTimer();
   left = cur.s[0][1]*60;
-  show("sess"); renderStep();
+  show("sess"); renderStep(); notifSetup();
   window.scrollTo(0,0);
 }
 function fmt(s){ return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
@@ -389,25 +401,99 @@ function renderStep(){
       <div class="timer"><span class="clock" id="clock">${fmt(left)}</span>
         <button class="btn" id="play">${tick?"Pausa":"Empezar"}</button>
         <button class="btn ghost" id="restart">Reiniciar</button></div>
+      <div class="hand alarmset" role="group" aria-label="Alarma al llegar a cero"><span>Alarma</span>${Object.entries(ALARMAS).map(([k,v])=>`<button data-alarm="${k}" aria-pressed="${(store.alarm||"fuerte")===k}">${v}</button>`).join("")}<button class="test" id="alarm-test">Probar</button></div>
       <div class="row"><button class="btn ghost" id="prev" ${step===0?"disabled":""}>Anterior</button><button class="btn ball" id="nextstep">${step===total-1?"Terminar sesión":"Siguiente paso"}</button></div>
     </div>`;
 }
-function beep(){
-  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-    [0,0.25,0.5].forEach(t=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.2,actx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t+.2);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+.2);});
-  }catch(e){}
-  try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
+// ---------- Alarma ----------
+// Fuerte: suena y vibra cada 2 s hasta que la cierres (máx. 30 s). Suave: 3 pitidos. Solo vibrar: sin sonido.
+// Pitido corto en 3, 2, 1. En la app instalada: pantalla siempre encendida mientras corre el cronómetro
+// y una notificación programada, para que avise aunque bloquees el teléfono.
+const ALARMAS = {fuerte:"Fuerte", suave:"Suave", vibrar:"Solo vibrar"};
+const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const LN = NATIVE ? window.Capacitor.Plugins.LocalNotifications : null;
+const KA = NATIVE ? window.Capacitor.Plugins.KeepAwake : null;
+let endAt=0, ringT=null, notifReady=null;
+function audio(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume(); }catch(e){} return actx; }
+function tone(f,t,d,vol,type){
+  const a=audio(); if(!a) return;
+  try{ const o=a.createOscillator(), g=a.createGain(), s=a.currentTime+t;
+    o.type=type||"square"; o.frequency.value=f; o.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(.0001,s); g.gain.exponentialRampToValueAtTime(vol,s+.01);
+    g.gain.setValueAtTime(vol,s+d-.03); g.gain.exponentialRampToValueAtTime(.0001,s+d);
+    o.start(s); o.stop(s+d+.02); }catch(e){}
 }
+function vib(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+function mode(){ return ALARMAS[store.alarm] ? store.alarm : "fuerte"; }
+function pip(){ if(mode()==="vibrar") vib(80); else tone(1047,0,.12,mode()==="fuerte"?.45:.2,"sine"); }
+function ring(){
+  stopRing();
+  const m=mode();
+  if(m==="suave"){ [0,.25,.5].forEach(t=>tone(880,t,.2,.3,"sine")); vib([200,100,200]); return; }
+  if(m==="vibrar"){ vib([600,200,600,200,600]); return; }
+  let n=0;
+  const once=()=>{ [0,.18,.36,.54].forEach((t,i)=>tone(i%2?1319:988,t,.15,.7)); vib([500,250,500]); if(++n>=15) stopRing(); };
+  once(); ringT=setInterval(once,2000);
+}
+function stopRing(){ clearInterval(ringT); ringT=null; vib(0); }
+function preview(){ ring(); if(ringT){ clearInterval(ringT); ringT=null; } }
+// Notificación del sistema (solo app instalada)
+function notifSetup(){
+  if(!LN) return Promise.resolve(false);
+  if(!notifReady) notifReady=(async()=>{ try{
+    let p=await LN.checkPermissions(); if(p.display!=="granted") p=await LN.requestPermissions();
+    if(p.display!=="granted") return false;
+    await LN.createChannel({id:"alarma",name:"Fin del ejercicio",description:"Aviso cuando el cronómetro llega a cero",importance:5,visibility:1,vibration:true});
+    return true; }catch(e){ return false; } })();
+  return notifReady;
+}
+async function notifAt(when,name){
+  if(!(await notifSetup())) return;
+  try{ await LN.cancel({notifications:[{id:7}]});
+    await LN.schedule({notifications:[{id:7,title:"¡Tiempo!",body:name+": terminó el ejercicio",channelId:"alarma",schedule:{at:new Date(when),allowWhileIdle:true}}]}); }catch(e){}
+}
+function notifCancel(){ if(LN){ try{ LN.cancel({notifications:[{id:7}]}).catch(()=>{}); }catch(e){} } }
+function awake(on){
+  try{ if(KA){ on ? KA.keepAwake() : KA.allowSleep(); return; } }catch(e){}
+  try{ if(on){ navigator.wakeLock && navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{}); } else { wake && wake.release(); wake=null; } }catch(e){}
+}
+// ---------- Cronómetro ----------
 function startTimer(){
-  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
-  try{ navigator.wakeLock && navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{}); }catch(e){}
-  tick = setInterval(()=>{
-    left--; store.minutes += 1/60;
-    const c=$("clock"); if(c) c.textContent=fmt(Math.max(left,0));
-    if(left<=0){ stopTimer(); save(); beep(); const p=$("play"); if(p) p.textContent="Tiempo"; }
-  },1000);
+  audio(); stopRing();
+  endAt = Date.now()+left*1000;
+  awake(true);
+  // La notificación queda 1,5 s después: si la app está a la vista, la alarma propia la cancela antes.
+  notifAt(endAt+1500, EX[cur.s[step][0]].name);
+  tick = setInterval(update,250);
 }
-function stopTimer(){ clearInterval(tick); tick=null; try{ wake && wake.release(); }catch(e){} wake=null; }
+function update(){
+  if(!tick) return;
+  const rem = Math.max(0, Math.ceil((endAt-Date.now())/1000));
+  if(rem<left){
+    store.minutes += (left-rem)/60; left=rem;
+    const c=$("clock"); if(c) c.textContent=fmt(left);
+    if(left>0 && left<=3 && document.visibilityState==="visible") pip();
+  }
+  if(left<=0){
+    const late = Date.now()-endAt > 5000;   // volviste a la app mucho después: ya avisó la notificación
+    stopTimer(true); save();
+    if(!late && document.visibilityState==="visible"){ notifCancel(); ring(); }
+    const p=$("play"); if(p) p.textContent="Empezar";
+    showAlarm();
+  }
+}
+function stopTimer(finished){
+  clearInterval(tick); tick=null; awake(false);
+  if(!finished){ notifCancel(); stopRing(); hideAlarm(); }
+}
+function showAlarm(){
+  if(!cur || step>=cur.s.length) return;
+  $("alarm-t").textContent = EX[cur.s[step][0]].name;
+  $("alarm-next").textContent = step===cur.s.length-1 ? "Terminar sesión" : "Siguiente paso";
+  $("alarm").hidden=false; $("alarm-next").focus();
+}
+function hideAlarm(){ const a=$("alarm"); if(a) a.hidden=true; }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") update(); });
 function saveCounter(){
   const c=$("cnt"); if(!c||c.value==="") return;
   const v=parseInt(c.value,10); if(isNaN(v)) return;
@@ -481,6 +567,9 @@ function show(v){
 document.addEventListener("click",ev=>{
   const t=ev.target.closest("button"); if(!t) return;
   if(t.dataset.open) return openSession(t.dataset.open);
+  if(t.dataset.alarm){ store.alarm=t.dataset.alarm; save();
+    document.querySelectorAll("[data-alarm]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.alarm===store.alarm));
+    return preview(); }
   switch(t.id){
     case "h-zurdo": case "h-diestro": store.hand = t.id==="h-zurdo"?"zurdo":"diestro"; save(); renderProgram(); renderBase(); break;
     case "tab-prog": stopTimer(); renderProgram(); show("prog"); break;
@@ -489,11 +578,14 @@ document.addEventListener("click",ev=>{
     case "toprog": case "toprog2": saveCounter(); stopTimer(); renderProgram(); show("prog"); break;
     case "play": if(tick){stopTimer(); t.textContent="Empezar";} else { if(left<=0) left=cur.s[step][1]*60; startTimer(); t.textContent="Pausa"; } save(); break;
     case "restart": stopTimer(); left=cur.s[step][1]*60; renderStep(); break;
+    case "alarm-test": preview(); break;
+    case "alarm-ok": stopRing(); hideAlarm(); break;
+    case "alarm-next": stopRing(); hideAlarm(); goStep(1); break;
     case "prev": goStep(-1); break;
     case "nextstep": goStep(1); break;
     case "next": { const i=ALL.indexOf(cur); if(ALL[i+1]) openSession(ALL[i+1].key); else {renderProgram(); show("prog");} break; }
     case "reset": $("resetconfirm").hidden=false; break;
-    case "resetyes": store={done:{},best:0,minutes:0,notes:{},hand:store.hand}; save(); renderProgram(); break;
+    case "resetyes": store={done:{},best:0,minutes:0,notes:{},hand:store.hand,alarm:store.alarm}; save(); renderProgram(); break;
   }
 });
 document.addEventListener("change",ev=>{ if(ev.target.id==="cnt") saveCounter(); });
