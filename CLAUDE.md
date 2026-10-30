@@ -19,7 +19,7 @@ cd android && ./gradlew assembleDebug
 ```
 Resultado: `android/app/build/outputs/apk/debug/app-debug.apk`.
 
-En GitHub: subir el repo, ir a Actions → "Compilar APK" → descargar el artefacto `paredon-apk`.
+En GitHub: cada push a main compila y publica el APK en https://github.com/leorimasa-commits/fronton/releases/latest/download/paredon.apk (también queda como artefacto `paredon-apk` en Actions).
 
 ## Después de cada cambio en www/
 `npx cap sync android` y volver a compilar.
