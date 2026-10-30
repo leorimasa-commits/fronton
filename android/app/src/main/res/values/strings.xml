@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Paredón</string>
-    <string name="title_activity_main">Paredón</string>
-    <string name="package_name">ar.paredon.tenis</string>
-    <string name="custom_url_scheme">ar.paredon.tenis</string>
+    <string name="app_name">Frontón</string>
+    <string name="title_activity_main">Frontón</string>
+    <string name="package_name">ar.fronton.tenis</string>
+    <string name="custom_url_scheme">ar.fronton.tenis</string>
 </resources>

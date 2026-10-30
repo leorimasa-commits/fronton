@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "ar.paredon.tenis"
+    namespace "ar.fronton.tenis"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "ar.paredon.tenis"
+        applicationId "ar.fronton.tenis"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

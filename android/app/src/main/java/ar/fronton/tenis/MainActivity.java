@@ -1,4 +1,4 @@
-package ar.paredon.tenis;
+package ar.fronton.tenis;
 
 import com.getcapacitor.BridgeActivity;
 

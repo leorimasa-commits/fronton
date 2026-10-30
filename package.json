@@ -1,8 +1,8 @@
 {
-  "name": "paredon",
+  "name": "fronton",
   "version": "1.0.0",
   "private": true,
-  "description": "Paredón: programa de tenis en frontón",
+  "description": "Frontón: programa de tenis en frontón",
   "dependencies": {
     "@capacitor-community/keep-awake": "5.0.1",
     "@capacitor/android": "6.2.0",
